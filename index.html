@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База данных врачей</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #DF3B20;
+            --secondary-color: #424B52;
+            --bg-light: #f8f9fa;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-light);
+            padding: 15px 0 30px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(66, 75, 82, 0.08);
+            margin-bottom: 20px;
+            animation: fadeInDown 0.4s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        h3 {
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+            position: relative;
+        }
+
+        h3::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary-color), rgba(223, 59, 32, 0.3));
+            border-radius: 2px;
+            animation: expandWidth 0.6s ease-out 0.2s backwards;
+        }
+
+        @keyframes expandWidth {
+            from {
+                width: 0;
+                opacity: 0;
+            }
+            to {
+                width: 50px;
+                opacity: 1;
+            }
+        }
+
+        .form-control, .form-select {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: #fafbfc;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(223, 59, 32, 0.15), 0 2px 4px rgba(223, 59, 32, 0.1);
+            background-color: white;
+            transform: translateY(-1px);
+        }
+
+        .form-control:hover, .form-select:hover {
+            border-color: #ced4da;
+            background-color: white;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(66, 75, 82, 0.08);
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .table thead {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .table thead th {
+            border: none;
+            padding: 15px 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.4s ease-out backwards;
+        }
+
+        .table tbody tr:nth-child(1) { animation-delay: 0.05s; }
+        .table tbody tr:nth-child(2) { animation-delay: 0.1s; }
+        .table tbody tr:nth-child(3) { animation-delay: 0.15s; }
+        .table tbody tr:nth-child(4) { animation-delay: 0.2s; }
+        .table tbody tr:nth-child(5) { animation-delay: 0.25s; }
+        .table tbody tr:nth-child(n+6) { animation-delay: 0.3s; }
+
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: translateX(2px);
+        }
+
+        .table tbody td {
+            padding: 15px 12px;
+            vertical-align: middle;
+        }
+
+        .badge-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #c9331a 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 4px rgba(223, 59, 32, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .doctor-card .badge-custom {
+            box-shadow: 0 1px 3px rgba(223, 59, 32, 0.25);
+        }
+
+        /* Карточный вид для мобильных */
+        .cards-container {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .doctor-card {
+            background: linear-gradient(to right, #ffffff 0%, #fefefe 100%);
+            border-radius: 10px;
+            padding: 9px 12px;
+            margin-bottom: 7px;
+            box-shadow: 0 2px 6px rgba(66, 75, 82, 0.08), 0 1px 2px rgba(66, 75, 82, 0.04);
+            border-left: 3px solid var(--primary-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.4s ease-out backwards;
+            cursor: default;
+        }
+
+        .doctor-card:nth-child(1) { animation-delay: 0.05s; }
+        .doctor-card:nth-child(2) { animation-delay: 0.1s; }
+        .doctor-card:nth-child(3) { animation-delay: 0.15s; }
+        .doctor-card:nth-child(4) { animation-delay: 0.2s; }
+        .doctor-card:nth-child(5) { animation-delay: 0.25s; }
+        .doctor-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+        .doctor-card:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 3px rgba(66, 75, 82, 0.1);
+        }
+
+        .doctor-card .card-name {
+            color: var(--secondary-color);
+            font-weight: 600;
+            font-size: 0.92rem;
+            margin-bottom: 5px;
+            line-height: 1.25;
+            letter-spacing: -0.01em;
+        }
+
+        .doctor-card .card-line {
+            color: #5a6268;
+            font-size: 0.82rem;
+            line-height: 1.35;
+            margin-bottom: 4px;
+        }
+
+        .doctor-card .card-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .doctor-card .badge-custom {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            display: inline-block;
+        }
+
+        /* Медиа-запросы для мобильных */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px 0 20px;
+            }
+
+            .container {
+                padding: 0 10px;
+            }
+
+            .search-container {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            h3 {
+                font-size: 1.3rem;
+                margin-bottom: 15px;
+            }
+
+            h3::after {
+                width: 40px;
+            }
+
+            .form-control, .form-select {
+                padding: 14px 15px;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+
+            .table-container {
+                display: none;
+            }
+
+            .cards-container {
+                display: block;
+            }
+
+            .doctor-card {
+                padding: 8px 11px;
+                margin-bottom: 6px;
+                border-radius: 8px;
+            }
+
+            .doctor-card .card-name {
+                font-size: 0.88rem;
+                margin-bottom: 5px;
+                line-height: 1.2;
+            }
+
+            .doctor-card .card-line {
+                font-size: 0.78rem;
+                margin-bottom: 3px;
+                line-height: 1.3;
+            }
+        }
+
+        @media (max-width: 576px) {
+            h3 {
+                font-size: 1.2rem;
+                margin-bottom: 12px;
+            }
+
+            h3::after {
+                width: 35px;
+                height: 2px;
+            }
+
+            .form-control, .form-select {
+                padding: 12px;
+            }
+
+            .doctor-card {
+                padding: 7px 10px;
+                margin-bottom: 5px;
+                border-radius: 7px;
+            }
+
+            .doctor-card .card-name {
+                font-size: 0.85rem;
+                margin-bottom: 4px;
+                line-height: 1.2;
+            }
+
+            .doctor-card .card-line {
+                font-size: 0.75rem;
+                margin-bottom: 3px;
+                line-height: 1.25;
+            }
+        }
+
+        /* Улучшения для планшетов */
+        @media (min-width: 769px) and (max-width: 992px) {
+            .table thead th,
+            .table tbody td {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="search-container">
+        <h3>Поиск специалистов</h3>
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <input type="text" id="nameInput" class="form-control" placeholder="Поиск по ФИО...">
+            </div>
+            <div class="col-12 col-md-4">
+                <select id="specSelect" class="form-select">
+                    <option value="">Все специальности</option>
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <input type="text" id="lpuInput" class="form-control" placeholder="Поиск по учреждениям...">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>ФИО</th>
+                    <th>Специальность</th>
+                    <th>Кор. название</th>
+                    <th>Полное название</th>
+                    <th>Город</th>
+                </tr>
+            </thead>
+            <tbody id="dataTable">
+                <tr><td colspan="5" class="text-center py-4">Загрузка данных...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="cards-container" id="cardsContainer">
+        <div class="text-center py-4 text-muted">Загрузка данных...</div>
+    </div>
+</div>
+
+<script>
+    // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT
+    const API_URL = "https://script.google.com/macros/s/AKfycbyVr-Rm7o8wJoLNNjkKRMNyCj_LKERbCB9RBSh6cuPFS0VnPAPFRFKrULJ68BPqjkcBTQ/exec"; 
+
+    let doctors = [];
+
+    // Загрузка данных
+    fetch(API_URL)
+        .then(response => response.json())
+        .then(data => {
+            doctors = data;
+            fillFilters(data);
+            renderTable(data);
+        })
+        .catch(err => {
+            const errorMsg = '<tr><td colspan="5" class="text-center py-4 text-danger">Ошибка загрузки данных. Проверьте ссылку API.</td></tr>';
+            document.getElementById('dataTable').innerHTML = errorMsg;
+            document.getElementById('cardsContainer').innerHTML = '<div class="text-center py-4 text-danger">Ошибка загрузки данных. Проверьте ссылку API.</div>';
+            console.error(err);
+        });
+
+    function fillFilters(data) {
+        const specs = [...new Set(data.map(d => d.specialty))].sort();
+        
+        const specSelect = document.getElementById('specSelect');
+
+        specs.forEach(s => specSelect.innerHTML += `<option value="${s}">${s}</option>`);
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('dataTable');
+        const cardsContainer = document.getElementById('cardsContainer');
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Ничего не найдено</td></tr>';
+            cardsContainer.innerHTML = '<div class="text-center py-4 text-muted">Ничего не найдено</div>';
+            return;
+        }
+
+        // Рендеринг таблицы для десктопа
+        tbody.innerHTML = data.map(d => `
+            <tr>
+                <td><strong>${escapeHtml(d.name)}</strong></td>
+                <td>${escapeHtml(d.specialty)}</td>
+                <td><span class="badge-custom">${escapeHtml(d.shortLPU)}</span></td>
+                <td>${escapeHtml(d.fullLPU)}</td>
+                <td>${escapeHtml(d.city)}</td>
+            </tr>
+        `).join('');
+
+        // Рендеринг карточек для мобильных
+        cardsContainer.innerHTML = data.map(d => `
+            <div class="doctor-card">
+                <div class="card-name">${escapeHtml(d.name)}</div>
+                <div class="card-line">${escapeHtml(d.specialty)}</div>
+                <div class="card-line">${escapeHtml(d.fullLPU)} (${escapeHtml(d.shortLPU)}) ${escapeHtml(d.city)}</div>
+            </div>
+        `).join('');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Функция фильтрации
+    function applyFilters() {
+        const nameQuery = document.getElementById('nameInput').value.toLowerCase();
+        const specQuery = document.getElementById('specSelect').value;
+        const lpuQuery = document.getElementById('lpuInput').value.toLowerCase();
+
+        const filtered = doctors.filter(d => {
+            return d.name.toLowerCase().includes(nameQuery) &&
+                   (specQuery === "" || d.specialty === specQuery) &&
+                   (lpuQuery === "" || d.fullLPU.toLowerCase().includes(lpuQuery) || d.shortLPU.toLowerCase().includes(lpuQuery));
+        });
+        renderTable(filtered);
+    }
+
+    // Слушатели событий для фильтрации
+    document.getElementById('nameInput').addEventListener('input', applyFilters);
+    document.getElementById('lpuInput').addEventListener('input', applyFilters);
+    document.getElementById('specSelect').addEventListener('change', applyFilters);
+</script>
+
+</body>
+</html>
